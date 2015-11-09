@@ -3,15 +3,16 @@
  *  openFrameworks
  *
  *  Created by Sander ter Braak on 26-08-10.
+ *	added completeEvent, some code formatting and other stuff by Patrick Meister, rob&rose grafik, November2012
  *
  */
 
-#include <poco/Timestamp.h>
-#include "ofMain.h"
-#include "ofxTransitions.h"
-
 #ifndef _OFXTWEEN
 #define _OFXTWEEN
+
+#include "poco/Timestamp.h"
+#include "ofMain.h"
+#include "ofxTransitions.h"
 
 #define TWEENMODE_OVERRIDE 0x01
 #define TWEENMODE_SEQUENCE 0x02
@@ -30,11 +31,10 @@ class ofxTweener : public ofBaseApp {
 public:
   ofxTweener();
 
-  void addTween(float &var, float to, float time, void (^callback)(float *arg) = NULL);
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), void (^callback)(float *arg) = NULL);
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, void (^callback)(float *arg) = NULL);
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint,
-                void (^callback)(float *arg) = NULL);
+  void addTween(float &var, float to, float time);
+  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float));
+  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay);
+  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint);
 
   void removeTween(float &var);
   void setTimeScale(float scale);
@@ -44,15 +44,15 @@ public:
 
   int getTweenCount();
 
+  ofEvent<float> onTweenCompleteEvent;
+
 private:
   float _scale;
   ofxTransitions a;
   bool _override;
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier,
-                void (^callback)(float *arg) = NULL);
+  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier);
   float bezier(float b, float e, float t, float p);
   vector<Tween> tweens;
-  std::map<float *, void (^)(float *arg)> callbacks;
 };
 
 extern ofxTweener Tweener;

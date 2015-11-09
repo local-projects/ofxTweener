@@ -3,6 +3,7 @@
  *  openFrameworks
  *
  *  Created by Sander ter Braak on 26-08-10.
+ *	added completeEvent, some code formatting and other stuff by Patrick Meister, rob&rose grafik, November2012
  *
  */
 
@@ -15,21 +16,21 @@ ofxTweener::ofxTweener(){
 	setMode(TWEENMODE_OVERRIDE);
 }
 
-void ofxTweener::addTween(float &var, float to, float time, void (^callback)(float * arg)){
-	addTween(var,to,time, &ofxTransitions::easeOutExpo ,0,0,false, callback);
+void ofxTweener::addTween(float &var, float to, float time){
+	addTween(var,to,time, &ofxTransitions::easeOutExpo ,0,0,false);
 }
 
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float), void (^callback)(float * arg)){
-	addTween(var,to,time,ease,0,0,false, callback);
+void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float)){
+	addTween(var,to,time,ease,0,0,false);
 }
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float), float delay, void (^callback)(float * arg)){
-	addTween(var,to,time,ease,delay,0,false, callback);
+void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float), float delay){
+	addTween(var,to,time,ease,delay,0,false);
 }
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float), float delay, float bezierPoint, void (^callback)(float * arg)){
-	addTween(var,to,time,ease,delay, bezierPoint, true, callback);
+void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float), float delay, float bezierPoint){
+	addTween(var,to,time,ease,delay, bezierPoint, true);
 }
 	
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float), float delay, float bezierPoint, bool useBezier, void (^callback)(float * arg)){
+void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease) (float,float,float,float), float delay, float bezierPoint, bool useBezier){
 	float from = var;
 	float _delay = delay;
 	Poco::Timestamp latest = 0;
@@ -71,14 +72,12 @@ void ofxTweener::addTween(float &var, float to, float time, float (ofxTransition
 	
 	tweens.push_back(t);
 	
-    if (callback!=NULL) callbacks[t._var] = callback;
 }
 
 void ofxTweener::update(){
 	for(int i = tweens.size() -1; i >= 0; --i){
 		if(float(tweens[i]._timestamp.elapsed()) >= float(tweens[i]._duration)){
-			//tween is done
-
+			//tween is done			
 			bool found = false;
 			if(!_override){
 				//if not found anymore, place on exact place
@@ -90,19 +89,23 @@ void ofxTweener::update(){
 				}
 			}
 			if(!found) tweens[i]._var[0] = tweens[i]._to;
-            
-            map<float *,void (^)(float * arg)>::iterator it = callbacks.find(tweens[i]._var);
-            if(it != callbacks.end()) {
-                it->second(tweens[i]._var);
-                callbacks.erase(it);
-            }
-            tweens.erase(tweens.begin() + i);
+			ofNotifyEvent(onTweenCompleteEvent, tweens[i]._var[0]);
+			tweens.erase(tweens.begin() + i);
+			//dispatch event here! complete event
 			
 		}
 		else if(float(tweens[i]._timestamp.elapsed()) > 0){
 			//smaller than 0 would be delayed
-			if(tweens[i]._useBezier) tweens[i]._var[0] = bezier(tweens[i]._from, tweens[i]._to ,(a.*tweens[i]._easeFunction )(float(tweens[i]._timestamp.elapsed()), 0, 1, float(tweens[i]._duration)), tweens[i]._by);
-			else tweens[i]._var[0] = (a.*tweens[i]._easeFunction )(float(tweens[i]._timestamp.elapsed()), tweens[i]._from, tweens[i]._to - tweens[i]._from, float(tweens[i]._duration));
+			if(tweens[i]._useBezier) {
+				tweens[i]._var[0] = bezier(	tweens[i]._from,
+											tweens[i]._to ,
+											(a.*tweens[i]._easeFunction )(float(tweens[i]._timestamp.elapsed()),
+											0, 1,
+											float(tweens[i]._duration)), tweens[i]._by);
+			} else {
+				tweens[i]._var[0] = (a.*tweens[i]._easeFunction )(float(tweens[i]._timestamp.elapsed()), tweens[i]._from, tweens[i]._to - tweens[i]._from, float(tweens[i]._duration));
+			}
+			// dispatch change event
 		}
 	}
 }
