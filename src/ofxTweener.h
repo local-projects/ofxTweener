@@ -19,40 +19,66 @@
 
 class Tween {
 public:
-  typedef float (ofxTransitions::*easeFunction)(float, float, float, float);
-  float *_var;
-  float _from, _to, _duration, _by, _useBezier;
-  easeFunction _easeFunction;
-  Poco::Timestamp _timestamp;
+	typedef float (ofxTransitions::*easeFunction)(float, float, float, float);
+	float *_var;
+	float _from, _to, _duration, _by, _useBezier;
+
+	//	void *target;
+	//	void *getterMethod;
+	//	void *setterMethod;
+	// float (*getterMethod)();
+	// void (*setterMethod)(float);
+
+	std::function<float()> getter;
+	std::function<void(float)> setter;
+
+	bool useGetterSetter;
+
+	easeFunction _easeFunction;
+	Poco::Timestamp _timestamp;
 };
 
 class ofxTweener : public ofBaseApp {
 
 public:
-  ofxTweener();
+	ofxTweener();
 
-  void addTween(float &var, float to, float time);
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float));
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay);
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint);
+	void addTween(float &var, float to, float time);
 
-  void removeTween(float &var);
-  void setTimeScale(float scale);
-  void update();
-  void removeAllTweens();
-  void setMode(int mode);
+	// This more generic template signature works, but doesn't enforce function type signature(?):
+	// void addTween(TweenTargetClass *target, TweenTargetGetterClass getterMethod, TweenTargetSetterClass setterMethod, float to, float time) {
 
-  int getTweenCount();
+	// Extra classes handle calls to superclasses...
+	template <class TweenTargetClass, class TweenTargetGetterClass, class TweenTargetSetterClass>
+	void addTween(TweenTargetClass *target, float (TweenTargetGetterClass::*getterMethod)() const, void (TweenTargetSetterClass::*setterMethod)(float), float to,
+								float time) {
+		// Pass this through to the std::function implementation
+		addTween(std::bind(getterMethod, std::ref(*target)), std::bind(setterMethod, std::ref(*target), std::placeholders::_1), to, time);
+	};
 
-  ofEvent<float> onTweenCompleteEvent;
+	// Or use std::function directly, but then binding syntax is so nasty...
+	void addTween(std::function<float()> getter, std::function<void(float)> setter, float to, float time);
+	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float));
+	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay);
+	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint);
+
+	void removeTween(float &var);
+	void setTimeScale(float scale);
+	void update();
+	void removeAllTweens();
+	void setMode(int mode);
+
+	int getTweenCount();
+
+	ofEvent<float> onTweenCompleteEvent;
 
 private:
-  float _scale;
-  ofxTransitions a;
-  bool _override;
-  void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier);
-  float bezier(float b, float e, float t, float p);
-  vector<Tween> tweens;
+	float _scale;
+	ofxTransitions a;
+	bool _override;
+	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier);
+	float bezier(float b, float e, float t, float p);
+	vector<Tween> tweens;
 };
 
 extern ofxTweener Tweener;
