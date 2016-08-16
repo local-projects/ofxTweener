@@ -13,6 +13,7 @@
 #include "poco/Timestamp.h"
 #include "ofMain.h"
 #include "ofxTransitions.h"
+#include "BasicScreenObject.h"
 
 #define TWEENMODE_OVERRIDE 0x01
 #define TWEENMODE_SEQUENCE 0x02
@@ -36,6 +37,8 @@ public:
 
 	easeFunction _easeFunction;
 	Poco::Timestamp _timestamp;
+    
+    BasicScreenObject *callingObject;
 };
 
 class ofxTweener : public ofBaseApp {
@@ -43,7 +46,7 @@ class ofxTweener : public ofBaseApp {
 public:
 	ofxTweener();
 
-	void addTween(float &var, float to, float time);
+	void addTween(BasicScreenObject* callingObject, float &var, float to, float time);
 
 	// This more generic template signature works, but doesn't enforce function type signature(?):
 	// void addTween(TweenTargetClass *target, TweenTargetGetterClass getterMethod, TweenTargetSetterClass setterMethod, float to, float time) {
@@ -58,9 +61,11 @@ public:
 
 	// Or use std::function directly, but then binding syntax is so nasty...
 	void addTween(std::function<float()> getter, std::function<void(float)> setter, float to, float time);
-	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float));
-	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay);
-	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint);
+	void addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float));
+    
+	void addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay);
+    
+	void addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint);
 
 	void removeTween(float &var);
 	void setTimeScale(float scale);
@@ -76,7 +81,7 @@ private:
 	float _scale;
 	ofxTransitions a;
 	bool _override;
-	void addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier);
+	void addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier);
 	float bezier(float b, float e, float t, float p);
 	vector<Tween> tweens;
 };

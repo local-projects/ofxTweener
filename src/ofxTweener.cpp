@@ -75,22 +75,23 @@ void ofxTweener::addTween(std::function<float()> getter, std::function<void(floa
 //	(target->*setterMethod)(to);
 //}
 
-void ofxTweener::addTween(float &var, float to, float time) {
-	addTween(var, to, time, &ofxTransitions::easeOutExpo, 0, 0, false);
+void ofxTweener::addTween(BasicScreenObject* callingObject, float &var, float to, float time) {
+	addTween(callingObject, var, to, time, &ofxTransitions::easeOutExpo, 0, 0, false);
 }
 
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float)) {
-	addTween(var, to, time, ease, 0, 0, false);
+void ofxTweener::addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float)) {
+	addTween(callingObject, var, to, time, ease, 0, 0, false);
 }
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay) {
-	addTween(var, to, time, ease, delay, 0, false);
+void ofxTweener::addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay) {
+	addTween(callingObject, var, to, time, ease, delay, 0, false);
 }
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint) {
-	addTween(var, to, time, ease, delay, bezierPoint, true);
+void ofxTweener::addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint) {
+	addTween(callingObject, var, to, time, ease, delay, bezierPoint, true);
 }
 
-void ofxTweener::addTween(float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint,
-													bool useBezier) {
+void ofxTweener::addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier) {
+    if (var == to) return;
+    
 	float from = var;
 	float _delay = delay;
 	Poco::Timestamp latest = 0;
@@ -99,6 +100,7 @@ void ofxTweener::addTween(float &var, float to, float time, float (ofxTransition
 		if (tweens[i]._var == &var) {
 			// object already tweening, just kill the old one
 			if (_override) {
+                tweens[i].callingObject = callingObject;
 				tweens[i]._from = from;
 				tweens[i]._to = to;
 				tweens[i]._by = bezierPoint;
@@ -120,6 +122,7 @@ void ofxTweener::addTween(float &var, float to, float time, float (ofxTransition
 
 	Tween t;
 	t.useGetterSetter = false;
+    t.callingObject = callingObject;
 	t._var = &var;
 	t._from = from;
 	t._to = to;
@@ -133,6 +136,9 @@ void ofxTweener::addTween(float &var, float to, float time, float (ofxTransition
 }
 
 void ofxTweener::update() {
+    int t = ofGetElapsedTimeMillis();
+    int preTweens = tweens.size();
+    
 	for (int i = tweens.size() - 1; i >= 0; --i) {
 		if (float(tweens[i]._timestamp.elapsed()) >= float(tweens[i]._duration)) {
 			// tween is done
@@ -146,9 +152,10 @@ void ofxTweener::update() {
 					}
 				}
 			}
-			if (!found)
-				tweens[i]._var[0] = tweens[i]._to;
-			ofNotifyEvent(onTweenCompleteEvent, tweens[i]._var[0]);
+			if (!found) tweens[i]._var[0] = tweens[i]._to;
+            
+//			ofNotifyEvent(onTweenCompleteEvent, tweens[i]._var[0]);
+            tweens[i].callingObject->onTweenComplete(tweens[i]._var[0]);
 			tweens.erase(tweens.begin() + i);
 			// dispatch event here! complete event
 
@@ -173,6 +180,10 @@ void ofxTweener::update() {
 			// dispatch change event
 		}
 	}
+    int elapsedT = ofGetElapsedTimeMillis() - t;
+    if (elapsedT > 16){
+        cout << "update tween: " << preTweens << "->" << tweens.size() << " = " << preTweens - tweens.size() << " in " << elapsedT << "ms" << endl;
+    }
 }
 
 void ofxTweener::removeTween(float &var) {
