@@ -90,7 +90,8 @@ void ofxTweener::addTween(BasicScreenObject* callingObject, float &var, float to
 }
 
 void ofxTweener::addTween(BasicScreenObject* callingObject, float &var, float to, float time, float (ofxTransitions::*ease)(float, float, float, float), float delay, float bezierPoint, bool useBezier) {
-    if (var == to) return;
+//    if (var == to) return;
+   
     
 	float from = var;
 	float _delay = delay;
